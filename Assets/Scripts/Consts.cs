@@ -11,6 +11,7 @@ public struct ChessPos
     public int y;
 
     public static ChessPos zero = new ChessPos(0, 0);
+    public static ChessPos none = new ChessPos(-1, -1);
     public ChessPos(int x, int y)
     {
         this.x = x;
