@@ -88,6 +88,12 @@ public class ProcessController : MonSingleton<ProcessController>
 {
     public CanvasScaler canvas_scaler;
     public ChessBoard board;
+    public MyChessAI _m_ai;
+    
+    public bool is_white_first = false;
+
+    public bool use_ai = false;
+    [HideInInspector]
     public bool is_white_start = false;
 
     private Vector2 current_screen_size = Vector2.zero;
@@ -97,10 +103,16 @@ public class ProcessController : MonSingleton<ProcessController>
     {
         get { return is_game_start;}
     }
+
+    private bool wait_ai = false;
     private void OnEnable()
     {
         EventManager.Instance.RegisterEvent<bool>(
             EventType.GameStateChanged, SetGameState);
+        EventManager.Instance.RegisterEvent<ChessPos>(
+            EventType.ON_AI_FINISHED, OnAIChessFinished);
+        is_white_start = is_white_first;
+        _m_ai.SetBelongChessboard(board);
     }
 
     private void SetGameState(bool state)
@@ -125,24 +137,51 @@ public class ProcessController : MonSingleton<ProcessController>
                 current_screen_size.x = Screen.width;
                 current_screen_size.y = Screen.height;
             }
+            ChessType chess_type = ChessType.BLACK;
+            if (is_white_start)
+            {
+                chess_type = ChessType.WHITE;
+            }
+            if (use_ai && chess_type == _m_ai.AIChessType)
+            {
+                if(!wait_ai)
+                {
+                    EventManager.Instance.PublicEvent(EventType.ON_AI_START);
+                    wait_ai = true;
+                }
+                return;
+            }
             if (Input.GetMouseButtonDown(0))
             {
                 bool is_on_right_pos;
                 ChessPos chessPos = board.CaculateAnchorPosIndex(Input.mousePosition, out is_on_right_pos);
                 if (is_on_right_pos)
                 {
-                    ChessType chess_type = ChessType.BLACK;
-                    if (is_white_start)
+                    if(board.PlaceChess(chess_type, chessPos.x, chessPos.y))
                     {
-                        chess_type = ChessType.WHITE;
+                        is_white_start = !is_white_start;
                     }
-                    board.PlaceChess(chess_type, chessPos.x, chessPos.y);
-                    is_white_start = !is_white_start;
+                    wait_ai = false;
                 }
             }
 
-
         }
 
+    }
+
+    void OnAIChessFinished(ChessPos next_pos)
+    {
+        ChessType chess_type = ChessType.BLACK;
+        if (is_white_start)
+        {
+            chess_type = ChessType.WHITE;
+        }
+        Debug.Log(next_pos);
+        if (board.PlaceChess(chess_type, next_pos.x, next_pos.y))
+        {
+            is_white_start = !is_white_start;
+        }
+        wait_ai = false;
+        Debug.Log("OnAIChessFinished");
     }
 }

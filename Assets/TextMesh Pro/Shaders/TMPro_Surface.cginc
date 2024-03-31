@@ -1,7 +1,7 @@
 void VertShader(inout appdata_full v, out Input data)
 {
-	v.vertex.x += _VertexOffsetX;
-	v.vertex.y += _VertexOffsetY;
+	v.vertex.x += _VertexChessPosX;
+	v.vertex.y += _VertexChessPosY;
 
 	UNITY_INITIALIZE_OUTPUT(Input, data);
 
@@ -35,7 +35,7 @@ void PixShader(Input input, inout SurfaceOutput o)
 {
 
 #if USE_DERIVATIVE
-	float2 pixelSize = float2(ddx(input.uv_MainTex.y), ddy(input.uv_MainTex.y));
+	float2 pixelSize = float2(x(input.uv_MainTex.y), y(input.uv_MainTex.y));
 	pixelSize *= _TextureWidth * .75;
 	float scale = rsqrt(dot(pixelSize, pixelSize)) * _GradientScale * (_Sharpness + 1);
 #else

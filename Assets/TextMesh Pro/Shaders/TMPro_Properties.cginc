@@ -13,7 +13,7 @@ uniform fixed4		_OutlineColor;				// RGBA : Color + Opacity
 uniform float		_OutlineWidth;				// v[ 0, 1]
 
 uniform float		_Bevel;						// v[ 0, 1]
-uniform float		_BevelOffset;				// v[-1, 1]
+uniform float		_BevelChessPos;				// v[-1, 1]
 uniform float		_BevelWidth;				// v[-1, 1]
 uniform float		_BevelClamp;				// v[ 0, 1]
 uniform float		_BevelRoundness;			// v[ 0, 1]
@@ -38,13 +38,13 @@ uniform float		_Diffuse;					// v[ 0, 1]
 uniform float		_Ambient;					// v[ 0, 1]
 
 uniform fixed4		_UnderlayColor;				// RGBA : Color + Opacity
-uniform float		_UnderlayOffsetX;			// v[-1, 1]
-uniform float		_UnderlayOffsetY;			// v[-1, 1]
+uniform float		_UnderlayChessPosX;			// v[-1, 1]
+uniform float		_UnderlayChessPosY;			// v[-1, 1]
 uniform float		_UnderlayDilate;			// v[-1, 1]
 uniform float		_UnderlaySoftness;			// v[ 0, 1]
 
 uniform fixed4 		_GlowColor;					// RGBA : Color + Intesity
-uniform float 		_GlowOffset;				// v[-1, 1]
+uniform float 		_GlowChessPos;				// v[-1, 1]
 uniform float 		_GlowOuter;					// v[ 0, 1]
 uniform float 		_GlowInner;					// v[ 0, 1]
 uniform float 		_GlowPower;					// v[ 1, 1/(1+4*4)]
@@ -58,8 +58,8 @@ uniform float		_ScaleRatioA;
 uniform float		_ScaleRatioB;
 uniform float		_ScaleRatioC;
 
-uniform float		_VertexOffsetX;
-uniform float		_VertexOffsetY;
+uniform float		_VertexChessPosX;
+uniform float		_VertexChessPosY;
 
 //uniform float		_UseClipRect;
 uniform float		_MaskID;

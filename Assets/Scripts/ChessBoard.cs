@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 // 棋盘
 public class ChessBoard : MonoEntity
@@ -35,7 +36,7 @@ public class ChessBoard : MonoEntity
     internal Dictionary<ChessPos, string> chess_map_dic = new Dictionary<ChessPos, string>();
 
     //检验游戏胜利相关
-    private Dictionary<ChessType, List<ChessPos>> chess_type_pos_map = new Dictionary<ChessType, List<ChessPos>>();
+    public Dictionary<ChessType, List<ChessInfo>> chess_type_pos_map = new Dictionary<ChessType, List<ChessInfo>>();
 
     private void Awake()
     {
@@ -78,7 +79,7 @@ public class ChessBoard : MonoEntity
     }
 
     //在位置放置一枚棋子
-    public void PlaceChess(ChessType chessType, int xIndex, int yIndex)
+    public bool PlaceChess(ChessType chessType, int xIndex, int yIndex)
     {
         ChessPos chessPos = new ChessPos(xIndex, yIndex);
         if (!chess_map_dic.ContainsKey(chessPos))
@@ -93,17 +94,17 @@ public class ChessBoard : MonoEntity
 
             if (!chess_type_pos_map.ContainsKey(chessType))
             {
-                chess_type_pos_map.Add(chessType, new List<ChessPos>());
+                chess_type_pos_map.Add(chessType, new List<ChessInfo>());
             }
-            chess_type_pos_map[chessType].Add(chessPos);
+            chess_type_pos_map[chessType].Add(chess.m_chessInfo);
 
-            if (CheckIsSuccessByCount(chessType, chessPos) || chess_map_dic.Count >= board_x_size * board_y_size)
+            if (CheckResultIsSuccess(chessType, chessPos) || CheckIsHeChess())
             {
                 Debug.Log(chessType + "YING LE");
                 EventManager.Instance.PublicEvent(EventType.GameStateChanged, false);
                 string win_chess = chessType == ChessType.WHITE ? "白棋" : "黑棋";
                 string tip_str = $"恭喜!! {win_chess}赢了,点击按钮再来一局!!";
-                if(chess_map_dic.Count >= board_x_size * board_y_size)
+                if(CheckIsHeChess())
                 {
                     win_chess = "无";
                     tip_str = $"和棋了,点击按钮再来一局!!";
@@ -112,7 +113,9 @@ public class ChessBoard : MonoEntity
                 controller_ui.SetShowTxt(tip_str);
                 controller_ui.ClickAddListener(OnFinish);
             }
+            return true;
         }
+        return false;
     }
 
     private void OnFinish()
@@ -178,284 +181,167 @@ public class ChessBoard : MonoEntity
         chess_map_dic.Clear();
         chess_type_pos_map.Clear();
     }
+
     //判断是否胜利
-
-    //判断棋子某个方向是否满足指定数量的棋子
-    private bool CheckByStep(
-        ChessPos p, List<ChessPos> chess_array, int xdiff, int ydiff, 
-        int cu_check_count=5, int ani_check_count=5, int check_count=5)
+    bool CheckResultIsSuccess(ChessType chessType, ChessPos pos)
     {
-        ChessPos tmp = new ChessPos(0, 0);
-        int i;
-        int cnt = 0;
+        int currentX = pos.x;
+        int currentY = pos.y;
 
-        //向反方向找到颜色相同的点
-        for (i = 1; i < ani_check_count; i++)
+        int count = 0;
+        List<ChessPos> winResult = new List<ChessPos>();
+        int LINE_COUNT = board_y_size;
+        int COL_COUNT = board_x_size;
+
+        ///横
+        /// o o o o o
+        /// o o o o o
+        /// x x x x x
+        /// o o o o o
+        /// o o o o o
+        winResult.Clear();
+        // 循环遍历当前行的前后四个位置（如果存在），检查是否有特定的棋子连成五子相连
+        //判断 currentX - 4 > 0 时，它的意思是判断左侧第 4 个位置是否在棋盘内。
+        //如果 currentX - 4 >= 0，则表示左侧第 4 个位置在棋盘内；
+        //否则，即 currentX - 4 < 0，表示左侧第 4 个位置已经超出了棋盘边界。
+        for (int i = (currentX - 4 >= 0 ? currentX - 4 : 0);
+            i <= (currentX + 4 < LINE_COUNT ? currentX + 4 : LINE_COUNT - 1);
+            i++)
         {
-            tmp.x = p.x - xdiff * i;
-            tmp.y = p.y - ydiff * i;
-            if (!chess_array.Contains(tmp))
-                break;
-            cnt++;
+           // 计算当前位置的坐标
+           ChessPos position = new ChessPos(i, currentY);
+
+            // 检查当前位置是否存在胜利的棋子
+            if (CheckCurrentStateHelper.ExistSpecificChessman(this, position, chessType))
+            {
+                // 将该棋子添加到胜利结果列表中，并增加计数器
+                winResult.Add(position);
+                count++;
+            }
+            else
+            {
+                // 如果不存在特定的棋子，清空胜利结果列表，并将计数器重置为0
+                winResult.Clear();
+                count = 0;
+            }
+
+            // 解析：如果计数器达到5，表示有五子相连，输出胜利者信息并返回true
+            if (count >= 5)
+            {
+                return true;
+            }
         }
 
-        for (i = 1; i < cu_check_count; i++)
+        ///竖
+        /// o o x o o
+        /// o o x o o
+        /// o o x o o
+        /// o o x o o
+        /// o o x o o
+        count = 0;
+        winResult.Clear();
+        for (int j = (currentY - 4 >= 0 ? currentY - 4 : 0);
+            j <= (currentY + 4 > COL_COUNT ? COL_COUNT - 1 : currentY + 4);
+            j++)
         {
-            tmp.x = p.x + xdiff * i;
-            tmp.y = p.y + ydiff * i;
-            if (!chess_array.Contains(tmp))
-                break;
-            cnt++;
+            ChessPos position = new ChessPos(currentX, j);
+            if (CheckCurrentStateHelper.ExistSpecificChessman(this, position, chessType))
+            {
+                winResult.Add(position);
+                count++;
+            }
+            else
+            {
+                winResult.Clear();
+                count = 0;
+            }
+            if (count >= 5)
+            {
+                return true;
+            }
         }
 
-        if (cnt >= check_count-1)
-            return true;
+        ///正斜
+        /// o o o o x
+        /// o o o x o
+        /// o o x o o
+        /// o x o o o
+        /// x o o o o
+        count = 0;
+        winResult.Clear();
+        ChessPos offset2 = new ChessPos(currentX - 4, currentY + 4);
+        for (int i = 0; i < 10; i++)
+        {
+            ChessPos position = new ChessPos(offset2.x + i, offset2.y - i);
+            if (CheckCurrentStateHelper.ExistSpecificChessman(this, position, chessType))
+            {
+                winResult.Add(position);
+                count++;
+            }
+            else
+            {
+                winResult.Clear();
+                count = 0;
+            }
+            if (count >= 5)
+            {
+                return true;
+            }
+        }
+
+        ///反斜
+        /// x o o o o
+        /// o x o o o
+        /// o o x o o
+        /// o o o x o
+        /// o o o o x
+        count = 0;
+        winResult.Clear();
+        ChessPos offset = new ChessPos(currentX - 4, currentY - 4);
+        for (int i = 0; i < 10; i++)
+        {
+            ChessPos position = new ChessPos(offset.x + i, offset.y + i);
+            if (CheckCurrentStateHelper.ExistSpecificChessman(this, position, chessType))
+            {
+                winResult.Add(position);
+                count++;
+            }
+            else
+            {
+                winResult.Clear();
+                count = 0;
+            }
+            if (count >= 5)
+            {
+                return true;
+            }
+        }
+        winResult.Clear();
         return false;
     }
 
-    private List<ChessPos> GetPosListByStepOtherChess(
-        ChessType m_ChessType, ChessPos p, List<ChessPos> chess_array, int xdiff, int ydiff, int check_count = 5)
+    bool CheckIsHeChess()
     {
-        List<ChessPos> chessPosList = new List<ChessPos>();
-        if (check_count <= 1)
-        {
-            return chessPosList;
-        }
-        ChessPos tmp = new ChessPos(0, 0);
-        int i;
-
-        int cnt = 0;
-        int cnt_other = 0;
-        List<ChessPos> cnt_blank_pos_list = new List<ChessPos>();
-
-        int rev_cnt = 0;
-        int rev_cnt_other = 0;
-        List<ChessPos> rev_cnt_blank_pos_list = new List<ChessPos>();
-
-        bool cnt_can_break = false;
-        bool rev_can_break = false;
-        // 1、从当前正反方向出发，直到遇到第一个对方棋子或者空格数加上当前计量总数等于check_count-1
-        for (i = -check_count + 1; i < check_count; i++)
-        {
-            if (i == 0)
-            {
-                continue;
-            }
-            tmp.x = p.x + xdiff * i;
-            tmp.y = p.y + ydiff * i;
-
-            if ((i < 0 && !rev_can_break) || (i > 0 && !cnt_can_break))
-                if (!chess_array.Contains(tmp))
-                {
-                    string chess_uid;
-                    chess_map_dic.TryGetValue(tmp, out chess_uid);
-                    bool has_entity;
-                    Chess chess = ChessFactory.Instance.GetEntity<Chess>(chess_uid, out has_entity);
-                    cnt_can_break = i > 0 && has_entity;
-                    rev_can_break = i < 0 && has_entity;
-                    if (has_entity)
-                    {
-                        if (i < 0 && !rev_can_break)
-                        {
-                            rev_cnt_other++;
-                        }
-                        else if (i > 0 && !cnt_can_break)
-                        {
-                            cnt_other++;
-                        }
-                    }
-                    else
-                    {
-                        if (i < 0) rev_cnt_blank_pos_list.Add(tmp);
-                        else cnt_blank_pos_list.Add(tmp);
-                    }
-                    cnt_can_break |= cnt + cnt_blank_pos_list.Count >= check_count - 1;
-                    rev_can_break |= rev_cnt + rev_cnt_blank_pos_list.Count >= check_count - 1;
-                    continue;
-                }
-
-            if (i > 0 && !cnt_can_break)
-            {
-                cnt++;
-            }
-            else if (i < 0 && !rev_can_break)
-            {
-                rev_cnt++;
-            }
-        }
-
-        //2、根据空格数和计数计算位置，分情况讨论
-        //1）某一边的计数总数加另一边的计数等于 check_count-1，此时没有空格
-        if (cnt + rev_cnt == check_count - 1)
-        {
-            ChessPos rev_before_pos = new ChessPos(p.x + xdiff * (-check_count), p.y + ydiff * (-check_count));
-            ChessPos cn_after_pos = new ChessPos(p.x + xdiff * check_count, p.y + ydiff * check_count);
-            if(!chess_map_dic.ContainsKey(rev_before_pos))
-            {
-                chessPosList.Add(rev_before_pos);
-            }
-            if (!chess_map_dic.ContainsKey(cn_after_pos))
-            {
-                chessPosList.Add(cn_after_pos);
-            }
-            return chessPosList;
-        }
-        //2）某一边的计数总数加另一边的计数总数小于 check_count-1，说明中间有空格 
-        //3）直接检测所有空格位置是否满足CheckByStep，检测范围就是当前的范围， 满足则加进去
-
-        else if (cnt + rev_cnt < check_count - 1)
-        {
-            cnt_blank_pos_list.AddRange(rev_cnt_blank_pos_list);
-            for (int b = 0; b < cnt_blank_pos_list.Count; b++)
-            {
-                ChessPos blank_chessPos = cnt_blank_pos_list[b];
-                int cur_check_count = Mathf.Clamp(
-                    p.x + (check_count - 1) * xdiff - blank_chessPos.x, 0, check_count - 1);
-                int ani_check_count = Mathf.Clamp(
-                    p.x + (-check_count + 1) * xdiff - blank_chessPos.x, 0, check_count - 1);
-                if (CheckByStep(
-                    blank_chessPos, chess_array, xdiff, ydiff, cur_check_count, ani_check_count, check_count))
-                {
-                    chessPosList.Add(blank_chessPos);
-                }
-            }
-        }
-        return chessPosList;
+        return chess_map_dic.Count >= board_x_size * board_y_size;
     }
 
-    private List<ChessPos> GetPosListByStep(ChessPos p, List<ChessPos> chess_array, int xdiff, int ydiff, int check_count = 5)
-    {
-        List<ChessPos> chessPosList = new List<ChessPos>();
-        if(check_count <= 1)
-        {
-            return chessPosList;
-        }
-        ChessPos tmp = new ChessPos(0, 0);
-        int i;
-
-        int cnt = 0;
-        int cnt_other = 0;
-        List<ChessPos> cnt_blank_pos_list = new List<ChessPos>();
-
-        int rev_cnt = 0;
-        int rev_cnt_other = 0;
-        List<ChessPos> rev_cnt_blank_pos_list = new List<ChessPos>();
-
-        bool cnt_can_break = false;
-        bool rev_can_break = false;
-        // 1、从当前正反方向出发，直到遇到第一个对方棋子或者空格数加上当前计量总数等于check_count-1
-        for (i = -check_count + 1; i < check_count; i++)
-        {
-            if(i == 0)
-            {
-                continue;
-            }
-            tmp.x = p.x + xdiff * i;
-            tmp.y = p.y + ydiff * i;
-
-            if((i < 0 && !rev_can_break) || (i > 0 && !cnt_can_break))
-                if (!chess_array.Contains(tmp))
-                {
-                    string chess_uid;
-                    chess_map_dic.TryGetValue(tmp, out chess_uid);
-                    bool has_entity;
-                    Chess chess = ChessFactory.Instance.GetEntity<Chess>(chess_uid, out has_entity);
-                    cnt_can_break = i > 0 && has_entity;
-                    rev_can_break = i < 0 && has_entity;
-                    if (has_entity)
-                    {
-                        if(i < 0 && !rev_can_break)
-                        {
-                            rev_cnt_other++;
-                        }
-                        else if(i > 0 && !cnt_can_break)
-                        {
-                            cnt_other++;
-                        }
-                    }
-                    else
-                    {
-                        if (i < 0) rev_cnt_blank_pos_list.Add(tmp);
-                        else cnt_blank_pos_list.Add(tmp);
-                    }
-                    cnt_can_break |= cnt + cnt_blank_pos_list.Count >= check_count - 1;
-                    rev_can_break |= rev_cnt + rev_cnt_blank_pos_list.Count >= check_count - 1;
-                    continue;
-                }
-
-                if (i > 0 && !cnt_can_break)
-                {
-                    cnt++;
-                }
-                else if(i < 0 && !rev_can_break)
-                {
-                    rev_cnt++;
-                }
-        }
-
-        //2、根据空格数和计数计算位置，分情况讨论
-        //1）某一边的计数总数加另一边的计数等于 check_count-1，此时已经没有位置可以下了
-        if(cnt + rev_cnt == check_count - 1)
-        {
-            return chessPosList;
-        }
-        //2）某一边的计数总数加另一边的计数总数小于 check_count-1，说明才有可能有下的地方满足下了之后满足check_count个的连接 
-        //3）直接检测所有空格位置是否满足CheckByStep，检测范围就是当前的范围， 满足则加进去
-
-        else if(cnt + rev_cnt < check_count - 1)
-        {
-            cnt_blank_pos_list.AddRange(rev_cnt_blank_pos_list);
-            for (int b = 0; b < cnt_blank_pos_list.Count; b++)
-            {
-                ChessPos blank_chessPos = cnt_blank_pos_list[b];
-                int cur_check_count = Mathf.Clamp(
-                    p.x + (check_count - 1) * xdiff - blank_chessPos.x, 0, check_count-1);
-                int ani_check_count = Mathf.Clamp(
-                    p.x + (-check_count + 1) * xdiff - blank_chessPos.x, 0, check_count - 1);
-                if (CheckByStep(
-                    blank_chessPos, chess_array, xdiff, ydiff, cur_check_count, ani_check_count, check_count))
-                {
-                    chessPosList.Add(blank_chessPos);
-                }
-            }
-        }
-        return chessPosList;
-    }
-
-
-    public bool GetNextCanPlacePosByChessCount(ChessType chessType, ChessPos p, int chessCount, out List<ChessPos> winChessPos)
-    {
-        List<ChessPos> array = chess_type_pos_map[chessType];
-        winChessPos = new List<ChessPos>();
-        winChessPos.AddRange(GetPosListByStep(p, array, 0, 1, chessCount));
-        winChessPos.AddRange(GetPosListByStep(p, array, 1, 0, chessCount));
-        winChessPos.AddRange(GetPosListByStep(p, array, 1, 1, chessCount));
-        winChessPos.AddRange(GetPosListByStep(p, array, -1, 1, chessCount));
-        return winChessPos.Count > 0;
-    }
-
-    public bool CheckIsSuccessByCount(ChessType chessType, ChessPos p, int check_count=5)
-    {
-        List<ChessPos> array = chess_type_pos_map[chessType];
-
-        if (CheckByStep(p, array, 0, 1, check_count - 1, check_count - 1, check_count))    //上下直线判断
-            return true;
-        if (CheckByStep(p, array, 1, 0, check_count - 1, check_count - 1, check_count))    //左右直线判断
-            return true;
-        if (CheckByStep(p, array, 1, 1, check_count - 1, check_count - 1, check_count))    //右朝上直线判断
-            return true;
-        if (CheckByStep(p, array, -1, 1, check_count - 1, check_count - 1, check_count))   //右朝下直线判断
-            return true;
-        return false;
-    }
-
-    public List<ChessPos> GetChessPosListByChessType(ChessType chessType)
+    public List<ChessInfo> GetChessPosListByChessType(ChessType chessType)
     {
         if (!chess_type_pos_map.ContainsKey(chessType))
         {
             return null;
         }
         return chess_type_pos_map[chessType];
+    }
+
+    public Chess GetChessByPos(ChessPos pos)
+    {
+        if (!chess_map_dic.ContainsKey(pos))
+            return null;
+        string entity_id = chess_map_dic[pos];
+        bool has_entity;
+        Chess chess = ChessFactory.Instance.GetEntity<Chess>(entity_id, out has_entity);
+        return chess;
     }
 
     void OnScreenSizeChanged(int x, int y, Vector2 referenceResolution)

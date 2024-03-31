@@ -14,8 +14,8 @@ Properties {
 	_OutlineSoftness	("Outline Softness", Range(0,1)) = 0
 
 	[HDR]_UnderlayColor		("Border Color", Color) = (0,0,0,.5)
-	_UnderlayOffsetX 	("Border OffsetX", Range(-1,1)) = 0
-	_UnderlayOffsetY 	("Border OffsetY", Range(-1,1)) = 0
+	_UnderlayChessPosX 	("Border ChessPosX", Range(-1,1)) = 0
+	_UnderlayChessPosY 	("Border ChessPosY", Range(-1,1)) = 0
 	_UnderlayDilate		("Border Dilate", Range(-1,1)) = 0
 	_UnderlaySoftness 	("Border Softness", Range(0,1)) = 0
 
@@ -36,8 +36,8 @@ Properties {
 	_PerspectiveFilter	("Perspective Correction", Range(0, 1)) = 0.875
 	_Sharpness			("Sharpness", Range(-1,1)) = 0
 
-	_VertexOffsetX		("Vertex OffsetX", float) = 0
-	_VertexOffsetY		("Vertex OffsetY", float) = 0
+	_VertexChessPosX		("Vertex ChessPosX", float) = 0
+	_VertexChessPosY		("Vertex ChessPosY", float) = 0
 
 	_ClipRect			("Clip Rect", vector) = (-32767, -32767, 32767, 32767)
 	_MaskSoftnessX		("Mask SoftnessX", float) = 0

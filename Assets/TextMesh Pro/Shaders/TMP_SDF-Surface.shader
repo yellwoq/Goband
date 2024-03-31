@@ -15,7 +15,7 @@ Properties {
 	_OutlineSoftness	("Outline Softness", Range(0,1)) = 0
 
 	_Bevel				("Bevel", Range(0,1)) = 0.5
-	_BevelOffset		("Bevel Offset", Range(-0.5,0.5)) = 0
+	_BevelChessPos		("Bevel ChessPos", Range(-0.5,0.5)) = 0
 	_BevelWidth			("Bevel Width", Range(-.5,0.5)) = 0
 	_BevelClamp			("Bevel Clamp", Range(0,1)) = 0
 	_BevelRoundness		("Bevel Roundness", Range(0,1)) = 0
@@ -34,7 +34,7 @@ Properties {
 	_OutlineShininess	("Outline Shininess", Range(0,1)) = 0
 
 	[HDR]_GlowColor		("Color", Color) = (0, 1, 0, 0.5)
-	_GlowOffset			("Offset", Range(-1,1)) = 0
+	_GlowChessPos			("ChessPos", Range(-1,1)) = 0
 	_GlowInner			("Inner", Range(0,1)) = 0.05
 	_GlowOuter			("Outer", Range(0,1)) = 0.05
 	_GlowPower			("Falloff", Range(1, 0)) = 0.75
@@ -57,8 +57,8 @@ Properties {
 	_PerspectiveFilter	("Perspective Correction", Range(0, 1)) = 0.875
 	_Sharpness			("Sharpness", Range(-1,1)) = 0
 
-	_VertexOffsetX		("Vertex OffsetX", float) = 0
-	_VertexOffsetY		("Vertex OffsetY", float) = 0
+	_VertexChessPosX		("Vertex ChessPosX", float) = 0
+	_VertexChessPosY		("Vertex ChessPosY", float) = 0
 
 	_CullMode			("Cull Mode", Float) = 0
 	//_MaskCoord		("Mask Coords", vector) = (0,0,0,0)
@@ -105,7 +105,7 @@ SubShader {
 	{
 		Name "Caster"
 		Tags { "LightMode" = "ShadowCaster" }
-		Offset 1, 1
+		ChessPos 1, 1
 
 		Fog {Mode Off}
 		ZWrite On

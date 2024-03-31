@@ -14,8 +14,8 @@ Properties {
 	_OutlineSoftness	("Outline Softness", Range(0,1)) = 0
 
 	[HDR]_UnderlayColor	("Border Color", Color) = (0,0,0,.5)
-	_UnderlayOffsetX 	("Border OffsetX", Range(-1,1)) = 0
-	_UnderlayOffsetY 	("Border OffsetY", Range(-1,1)) = 0
+	_UnderlayChessPosX 	("Border ChessPosX", Range(-1,1)) = 0
+	_UnderlayChessPosY 	("Border ChessPosY", Range(-1,1)) = 0
 	_UnderlayDilate		("Border Dilate", Range(-1,1)) = 0
 	_UnderlaySoftness 	("Border Softness", Range(0,1)) = 0
 
@@ -36,8 +36,8 @@ Properties {
 	_PerspectiveFilter	("Perspective Correction", Range(0, 1)) = 0.875
 	_Sharpness			("Sharpness", Range(-1,1)) = 0
 
-	_VertexOffsetX		("Vertex OffsetX", float) = 0
-	_VertexOffsetY		("Vertex OffsetY", float) = 0
+	_VertexChessPosX		("Vertex ChessPosX", float) = 0
+	_VertexChessPosY		("Vertex ChessPosY", float) = 0
 
 	_ClipRect			("Clip Rect", vector) = (-32767, -32767, 32767, 32767)
 	_MaskSoftnessX		("Mask SoftnessX", float) = 0
@@ -130,8 +130,8 @@ SubShader {
 			float bold = step(input.texcoord1.y, 0);
 
 			float4 vert = input.vertex;
-			vert.x += _VertexOffsetX;
-			vert.y += _VertexOffsetY;
+			vert.x += _VertexChessPosX;
+			vert.y += _VertexChessPosY;
 			float4 vPosition = UnityObjectToClipPos(vert);
 
 			float2 pixelSize = vPosition.w;
@@ -167,9 +167,9 @@ SubShader {
 			layerScale /= 1 + ((_UnderlaySoftness * _ScaleRatioC) * layerScale);
 			float layerBias = (.5 - weight) * layerScale - .5 - ((_UnderlayDilate * _ScaleRatioC) * .5 * layerScale);
 
-			float x = -(_UnderlayOffsetX * _ScaleRatioC) * _GradientScale / _TextureWidth;
-			float y = -(_UnderlayOffsetY * _ScaleRatioC) * _GradientScale / _TextureHeight;
-			float2 layerOffset = float2(x, y);
+			float x = -(_UnderlayChessPosX * _ScaleRatioC) * _GradientScale / _TextureWidth;
+			float y = -(_UnderlayChessPosY * _ScaleRatioC) * _GradientScale / _TextureHeight;
+			float2 layerChessPos = float2(x, y);
 			#endif
 
 			// Generate UV for the Masking Texture
@@ -184,7 +184,7 @@ SubShader {
 			output.param = half4(scale, bias - outline, bias + outline, bias);
 			output.mask = half4(vert.xy * 2 - clampedRect.xy - clampedRect.zw, 0.25 / (0.25 * half2(_MaskSoftnessX, _MaskSoftnessY) + pixelSize.xy));
 			#if (UNDERLAY_ON || UNDERLAY_INNER)
-			output.texcoord1 = float4(input.texcoord0 + layerOffset, input.color.a, 0);
+			output.texcoord1 = float4(input.texcoord0 + layerChessPos, input.color.a, 0);
 			output.underlayParam = half2(layerScale, layerBias);
 			#endif
 

@@ -38,8 +38,8 @@ pixel_t VertShader(vertex_t input)
     float bold = step(input.texcoord1.y, 0);
 
     float4 vert = input.position;
-    vert.x += _VertexOffsetX;
-    vert.y += _VertexOffsetY;
+    vert.x += _VertexChessPosX;
+    vert.y += _VertexChessPosY;
 
     float4 vPosition = UnityObjectToClipPos(vert);
 
@@ -83,8 +83,8 @@ pixel_t VertShader(vertex_t input)
     float4 underlayColor = _UnderlayColor;
     underlayColor.rgb *= underlayColor.a;
 
-    float x = -(_UnderlayOffsetX * _ScaleRatioC) * _GradientScale / _TextureWidth;
-    float y = -(_UnderlayOffsetY * _ScaleRatioC) * _GradientScale / _TextureHeight;
+    float x = -(_UnderlayChessPosX * _ScaleRatioC) * _GradientScale / _TextureWidth;
+    float y = -(_UnderlayChessPosY * _ScaleRatioC) * _GradientScale / _TextureHeight;
 
     output.texcoord2 = float4(input.texcoord0 + float2(x, y), input.color.a, 0);
     output.underlayColor = underlayColor;
@@ -100,7 +100,7 @@ float4 PixShader(pixel_t input) : SV_Target
     float d = tex2D(_MainTex, input.texcoord0.xy).a;
 
     float2 UV = input.texcoord0.xy;
-    float scale = rsqrt(abs(ddx(UV.x) * ddy(UV.y) - ddy(UV.x) * ddx(UV.y))) * input.param.y;
+    float scale = rsqrt(abs(x(UV.x) * y(UV.y) - y(UV.x) * x(UV.y))) * input.param.y;
 
     #if (UNDERLAY_ON | UNDERLAY_INNER)
     float layerScale = scale;

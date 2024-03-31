@@ -5,6 +5,13 @@ public enum ChessType
     BLACK
 }
 
+public enum AIType
+{
+    EASY,
+    MIDDLE,
+    DIFFICULT
+}
+
 public struct ChessPos
 {
     public int x;
@@ -32,6 +39,21 @@ public struct ChessPos
     {
         return new ChessPos(c1.x + c2.x, c1.y + c2.y);
     }
+
+    public override bool Equals(object obj)
+    {
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return base.GetHashCode();
+    }
+
+    public override string ToString()
+    {
+        return $"[{x}-{y}]";
+    }
 }
 
 public enum EntityType
@@ -54,6 +76,8 @@ public enum EventType
     GetRefrenceSolution,
     OnScreenChanged,
     GameStateChanged,
+    ON_AI_START,
+    ON_AI_FINISHED,
 }
 
 

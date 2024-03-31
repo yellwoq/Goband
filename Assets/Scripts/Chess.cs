@@ -10,6 +10,15 @@ public class ChessInfo
     internal ChessType chess_type;
     //棋子位置
     internal ChessPos chess_pos;
+    //分数
+    public int score;
+
+    public ChessInfo(ChessType chess_type, ChessPos chess_pos, int score)
+    {
+        this.chess_type = chess_type;
+        this.chess_pos = chess_pos;
+        this.score = score;
+    }
 }
 
 public class Chess : MonoEntity
@@ -24,9 +33,15 @@ public class Chess : MonoEntity
 
     private Image _m_chess_img;
 
+    [HideInInspector]
+    public int score;
+
+    public ChessInfo m_chessInfo;
+
     private void Awake()
     {
         _m_chess_img = GetComponent<Image>();
+        m_chessInfo = new ChessInfo(chess_type, chess_pos, score);
     }
 
     internal void SetInfo(ChessType chess_type, ChessPos chess_pos, Vector2 anchor_pos)

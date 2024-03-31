@@ -26,7 +26,7 @@ float3 GetSurfaceNormal(float4 h, float bias)
 {
 	bool raisedBevel = step(1, fmod(_ShaderFlags, 2));
 
-	h += bias+_BevelOffset;
+	h += bias+_BevelChessPos;
 
 	float bevelWidth = max(.01, _OutlineWidth+_BevelWidth);
 
@@ -65,7 +65,7 @@ float3 GetSpecular(float3 n, float3 l)
 
 float4 GetGlowColor(float d, float scale)
 {
-	float glow = d - (_GlowOffset*_ScaleRatioB) * 0.5 * scale;
+	float glow = d - (_GlowChessPos*_ScaleRatioB) * 0.5 * scale;
 	float t = lerp(_GlowInner, (_GlowOuter * _ScaleRatioB), step(0.0, glow)) * 0.5 * scale;
 	glow = saturate(abs(glow/(1.0 + t)));
 	glow = 1.0-pow(glow, _GlowPower);

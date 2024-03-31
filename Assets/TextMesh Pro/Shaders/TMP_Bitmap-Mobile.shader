@@ -5,8 +5,8 @@ Properties {
 	[HDR]_Color		("Text Color", Color) = (1,1,1,1)
 	_DiffusePower	("Diffuse Power", Range(1.0,4.0)) = 1.0
 
-	_VertexOffsetX("Vertex OffsetX", float) = 0
-	_VertexOffsetY("Vertex OffsetY", float) = 0
+	_VertexChessPosX("Vertex ChessPosX", float) = 0
+	_VertexChessPosY("Vertex ChessPosY", float) = 0
 	_MaskSoftnessX("Mask SoftnessX", float) = 0
 	_MaskSoftnessY("Mask SoftnessY", float) = 0
 
@@ -74,8 +74,8 @@ SubShader {
 		fixed4		_Color;
 		float		_DiffusePower;
 
-		uniform float		_VertexOffsetX;
-		uniform float		_VertexOffsetY;
+		uniform float		_VertexChessPosX;
+		uniform float		_VertexChessPosY;
 		uniform float4		_ClipRect;
 		uniform float		_MaskSoftnessX;
 		uniform float		_MaskSoftnessY;
@@ -84,8 +84,8 @@ SubShader {
 		{
 			v2f OUT;
 			float4 vert = v.vertex;
-			vert.x += _VertexOffsetX;
-			vert.y += _VertexOffsetY;
+			vert.x += _VertexChessPosX;
+			vert.y += _VertexChessPosY;
 
 			vert.xy += (vert.w * 0.5) / _ScreenParams.xy;
 

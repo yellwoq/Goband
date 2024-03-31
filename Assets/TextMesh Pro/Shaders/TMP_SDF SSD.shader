@@ -15,7 +15,7 @@ Properties {
     _OutlineSoftness    ("Outline Softness", Range(0,1)) = 0
 
     _Bevel              ("Bevel", Range(0,1)) = 0.5
-    _BevelOffset        ("Bevel Offset", Range(-0.5,0.5)) = 0
+    _BevelChessPos        ("Bevel ChessPos", Range(-0.5,0.5)) = 0
     _BevelWidth         ("Bevel Width", Range(-.5,0.5)) = 0
     _BevelClamp         ("Bevel Clamp", Range(0,1)) = 0
     _BevelRoundness     ("Bevel Roundness", Range(0,1)) = 0
@@ -38,13 +38,13 @@ Properties {
 
 
     [HDR]_UnderlayColor ("Border Color", Color) = (0,0,0, 0.5)
-    _UnderlayOffsetX    ("Border OffsetX", Range(-1,1)) = 0
-    _UnderlayOffsetY    ("Border OffsetY", Range(-1,1)) = 0
+    _UnderlayChessPosX    ("Border ChessPosX", Range(-1,1)) = 0
+    _UnderlayChessPosY    ("Border ChessPosY", Range(-1,1)) = 0
     _UnderlayDilate     ("Border Dilate", Range(-1,1)) = 0
     _UnderlaySoftness   ("Border Softness", Range(0,1)) = 0
 
     [HDR]_GlowColor     ("Color", Color) = (0, 1, 0, 0.5)
-    _GlowOffset         ("Offset", Range(-1,1)) = 0
+    _GlowChessPos         ("ChessPos", Range(-1,1)) = 0
     _GlowInner          ("Inner", Range(0,1)) = 0.05
     _GlowOuter          ("Outer", Range(0,1)) = 0.05
     _GlowPower          ("Falloff", Range(1, 0)) = 0.75
@@ -66,8 +66,8 @@ Properties {
     _PerspectiveFilter  ("Perspective Correction", Range(0, 1)) = 0.875
     _Sharpness          ("Sharpness", Range(-1,1)) = 0
 
-    _VertexOffsetX      ("Vertex OffsetX", float) = 0
-    _VertexOffsetY      ("Vertex OffsetY", float) = 0
+    _VertexChessPosX      ("Vertex ChessPosX", float) = 0
+    _VertexChessPosY      ("Vertex ChessPosY", float) = 0
 
     _MaskCoord          ("Mask Coordinates", vector) = (0, 0, 32767, 32767)
     _ClipRect           ("Clip Rect", vector) = (-32767, -32767, 32767, 32767)
@@ -154,7 +154,7 @@ SubShader {
             float4 textures         : TEXCOORD5;
         };
 
-        // Used by Unity internally to handle Texture Tiling and Offset.
+        // Used by Unity internally to handle Texture Tiling and ChessPos.
         float4 _FaceTex_ST;
         float4 _OutlineTex_ST;
 
@@ -174,8 +174,8 @@ SubShader {
             float bold = step(input.texcoord1.y, 0);
 
             float4 vert = input.position;
-            vert.x += _VertexOffsetX;
-            vert.y += _VertexOffsetY;
+            vert.x += _VertexChessPosX;
+            vert.y += _VertexChessPosY;
 
             float4 vPosition = UnityObjectToClipPos(vert);
 
@@ -186,9 +186,9 @@ SubShader {
             float4 underlayColor = _UnderlayColor;
             underlayColor.rgb *= underlayColor.a;
 
-            float x = -(_UnderlayOffsetX * _ScaleRatioC) * _GradientScale / _TextureWidth;
-            float y = -(_UnderlayOffsetY * _ScaleRatioC) * _GradientScale / _TextureHeight;
-            float2 bOffset = float2(x, y);
+            float x = -(_UnderlayChessPosX * _ScaleRatioC) * _GradientScale / _TextureWidth;
+            float y = -(_UnderlayChessPosY * _ScaleRatioC) * _GradientScale / _TextureHeight;
+            float2 bChessPos = float2(x, y);
         #endif
 
             // Generate UV for the Masking Texture
@@ -211,7 +211,7 @@ SubShader {
             output.mask = half2(vert.xy * 2 - clampedRect.xy - clampedRect.zw);
             output.viewDir = mul((float3x3)_EnvMatrix, _WorldSpaceCameraPos.xyz - mul(unity_ObjectToWorld, vert).xyz);
         #if (UNDERLAY_ON || UNDERLAY_INNER)
-            output.texcoord2 = input.texcoord0 + bOffset;
+            output.texcoord2 = input.texcoord0 + bChessPos;
             output.underlayColor = underlayColor;
         #endif
             output.textures = float4(faceUV, outlineUV);
@@ -226,7 +226,7 @@ SubShader {
 
             float c = tex2D(_MainTex, input.atlas).a;
 
-            float2 pixelSize = float2(ddx(input.atlas.y), ddy(input.atlas.y));
+            float2 pixelSize = float2(x(input.atlas.y), y(input.atlas.y));
             pixelSize *= _TextureWidth * .75;
             float scale = rsqrt(dot(pixelSize, pixelSize)) * _GradientScale * (_Sharpness + 1);
 
@@ -248,8 +248,8 @@ SubShader {
             faceColor = GetColor(sd, faceColor, outlineColor, outline, softness);
 
         #if BEVEL_ON
-            float3 dxy = float3(0.5 / _TextureWidth, 0.5 / _TextureHeight, 0);
-            float3 n = GetSurfaceNormal(input.atlas, weight, dxy);
+            float3 xy = float3(0.5 / _TextureWidth, 0.5 / _TextureHeight, 0);
+            float3 n = GetSurfaceNormal(input.atlas, weight, xy);
 
             float3 bump = UnpackNormal(tex2D(_BumpMap, input.textures.xy + float2(_FaceUVSpeedX, _FaceUVSpeedY) * _Time.y)).xyz;
             bump *= lerp(_BumpFace, _BumpOutline, saturate(sd + outline * 0.5));
